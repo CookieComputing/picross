@@ -80,6 +80,18 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
       assert(Board.numRows(board) > 0 && Board.numCols(board) > 0)
     }
   }
+
+  property("a board's rows and cols should match the provided tiles") {
+    forAll(sameSizedTiles) { tiles =>
+      val rowSize = tiles.size
+      val colSize = tiles(0).size
+
+      Board.newBoard(tiles) match
+        case None => failed()
+        case Some(board) =>
+            assert(Board.numRows(board) == rowSize && Board.numCols(board) == colSize)
+    }
+  }
 }
 
 object BoardSpec extends OptionValues {

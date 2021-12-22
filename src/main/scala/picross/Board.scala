@@ -77,5 +77,5 @@ object Board {
    * @param board the board to get cols from
    * @return the number of cols the board has
    */
-  def numCols(board: Board): Int = board.size
+  def numCols(board: Board): Int = board(0).size
 }

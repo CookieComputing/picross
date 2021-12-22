@@ -74,6 +74,12 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
               case Some(colTiles) =>
                 colTiles == (for { r <- 0 until tiles.size } yield tiles(r)(col)).toList))}
   }
+
+  property("a board should have > 0 rows and cols") {
+    forAll(validBoardGen) { board =>
+      assert(Board.numRows(board) > 0 && Board.numCols(board) > 0)
+    }
+  }
 }
 
 object BoardSpec extends OptionValues {

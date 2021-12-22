@@ -65,4 +65,17 @@ object Board {
    */
   def colored(tile: Tile): Boolean = tile
 
+  /**
+   * Returns the number of rows this board has
+   * @param board the board to get rows from
+   * @return the number of rows the board has
+   */
+  def numRows(board: Board): Int = board.size
+
+  /**
+   * Returns the number of cols this board has
+   * @param board the board to get cols from
+   * @return the number of cols the board has
+   */
+  def numCols(board: Board): Int = board.size
 }

@@ -39,6 +39,28 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
               }))
     }
   }
+
+  property("Every's clues + the individual spaces between clues should be <= row/col size") {
+    forAll(BoardSpec.validBoardGen) { board =>
+      val rowSize = Board.numRows(board)
+      val colSize = Board.numCols(board)
+      assert((0 until rowSize).forall( row =>
+        Clue.getClueForRow(row)(using board) match
+          case None => false
+          case Some(Clue(clues)) => {
+            // -1 because we are counting the gaps between clues
+            (clues.sum + clues.size - 1) <= colSize
+          }
+      ))
+
+      assert((0 until colSize).forall(col =>
+        Clue.getClueForCol(col)(using board) match
+          case None => false
+          case Some(Clue(clues)) =>
+            (clues.sum + clues.size - 1) <= rowSize
+      ))
+    }
+  }
 }
 
 object ClueSpec {

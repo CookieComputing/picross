@@ -3,6 +3,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Prop.passed
 import org.scalatest.FutureOutcome.failed
+import org.scalatest.OptionValues
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.prop.TableDrivenPropertyChecks.*
@@ -46,9 +47,36 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
       }
     }
   }
+
+  property("Calling getRow on a valid part of a board " +
+    "should return the same tiles per row as the tiles used to generate the board") {
+    forAll(sameSizedTiles) { tiles =>
+      Board.newBoard(tiles) match
+        case None => failed()
+        case Some(board) =>
+          assert((0 until tiles.size).forall(
+              row => Board.getRow(row)(using board) match
+                case None => false
+                case Some(rowTiles) =>
+                    rowTiles == tiles(row)))
+    }
+  }
+
+  property("Calling getCol on a valid part of a board " +
+    "should return the same tiles per col as the tiles used to generate the board") {
+    forAll(sameSizedTiles) { tiles =>
+      Board.newBoard(tiles) match
+        case None => failed()
+        case Some(board) =>
+          assert((0 until tiles(0).size).forall(
+            col => Board.getCol(col)(using board) match
+              case None => false
+              case Some(colTiles) =>
+                colTiles == (for { r <- 0 until tiles.size } yield tiles(r)(col)).toList))}
+  }
 }
 
-object BoardSpec {
+object BoardSpec extends OptionValues {
   private val tileRowGen: Int => Gen[List[Tile]] = rowSize =>
     Gen.listOfN(rowSize, Gen.oneOf(Board.newTile(true), Board.newTile(false)))
 
@@ -89,4 +117,7 @@ object BoardSpec {
       val (front, back) = tiles.splitAt(randomIndex)
       front ++ List(List.empty[Tile]) ++ back
 
+  val validBoardGen: Gen[Board] = for {
+    tiles <- sameSizedTiles
+  } yield Board.newBoard(tiles).value
 }

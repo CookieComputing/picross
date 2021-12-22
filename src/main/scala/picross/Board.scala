@@ -10,6 +10,9 @@ object Board {
   // A Tile is colored if it is true, uncolored if it is not
   opaque type Tile = Boolean
 
+  private def inBounds[A](tiles: IndexedSeq[A], index: Int): Boolean =
+    0 <= index && index < tiles.size
+
   /**
    * Constructs a new board from the provided 2D list of tiles. Note that each list should
    * have equal length, otherwise this function will return None
@@ -41,12 +44,18 @@ object Board {
    * @return Some(tile) located at (row, col) for the given board, None if out of bounds
    */
   def tileAt(row: Int, col: Int)(using board: Board): Option[Tile] = {
-    def inBounds[A](tiles: IndexedSeq[A], index: Int): Boolean =
-      0 <= index && index < tiles.size
-
     if inBounds(board, row) && inBounds(board(row), col) then
       Some(board(row)(col)) else None
   }
+
+  def getRow(row: Int)(using board: Board): Option[List[Tile]] =
+    if inBounds(board, row) then Some(board(row).toList) else None
+
+  def getCol(col: Int)(using board: Board): Option[List[Tile]] =
+    // A board is guaranteed to have at least one element upon generation
+    if inBounds(board(0), col) then
+      Some((for {r <- 0 until board.size} yield Board.tileAt(r, col)).toList.flatten)
+    else None
 
   /**
    * Determines if the provided tile should be colored or not
@@ -55,4 +64,5 @@ object Board {
    * @return Whether or not the tile is colored
    */
   def colored(tile: Tile): Boolean = tile
+
 }

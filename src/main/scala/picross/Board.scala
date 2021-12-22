@@ -26,6 +26,7 @@ object Board {
 
   /**
    * Creates a new tile
+   *
    * @param colored Whether or not the tile is colored
    * @return a freshly created tile
    */
@@ -34,8 +35,8 @@ object Board {
   /**
    * Retrieves the tile located at (row, col)
    *
-   * @param row   The requested row
-   * @param col   The requested col
+   * @param row  The requested row
+   * @param col  The requested col
    * @param Board The board to be checked
    * @return Some(tile) located at (row, col) for the given board, None if out of bounds
    */

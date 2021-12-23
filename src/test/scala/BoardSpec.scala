@@ -7,7 +7,7 @@ import org.scalatest.OptionValues
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalatest.prop.TableDrivenPropertyChecks.*
-import picross.Board
+import picross.{Board, Posn}
 import picross.Board.{Board, Tile}
 
 import scala.math
@@ -65,7 +65,7 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
           case Some(b) =>
             assert(tiles.map(_.zipWithIndex).zipWithIndex.forall(
               (row, rowIndex) => row.forall(
-                (tile, colIndex) => Board.tileAt(rowIndex, colIndex)(using b) match
+                (tile, colIndex) => Board.tileAt(Posn(rowIndex, colIndex))(using b) match
                   case None => false
                   case Some(boardTile) => Board.colored(boardTile) == Board.colored(tile))))
       }

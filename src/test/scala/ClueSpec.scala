@@ -11,7 +11,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import picross.Board.{Board, Tile}
 import picross.{Board, Clue}
 
-class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
+class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks with OptionValues {
   property("clues should pass the table tests for getClueForRow") {
     forAll(exampleBoards) {
       (tiles, rows, _) =>
@@ -59,6 +59,28 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
           case Some(Clue(clues)) =>
             (clues.sum + clues.size - 1) <= rowSize
       ))
+    }
+  }
+
+  property("The number of clues on a column or row is equal to the number of colored tiles") {
+    forAll(sameSizedTiles) { tiles =>
+      val coloredCount = tiles.map(_.count(Board.colored)).sum
+
+      Board.newBoard(tiles) match
+        case None => failed()
+        case Some(board) => {
+          val rowSize = Board.numRows(board)
+          val colSize = Board.numCols(board)
+
+          val colCount = (0 until colSize).foldLeft(0)((acc, col) => {
+            acc + Clue.getClueForCol(col)(using board).value.clues.sum
+          })
+
+          val rowCount = (0 until rowSize).foldLeft(0)((acc, row) => {
+            acc + Clue.getClueForRow(row)(using board).value.clues.sum
+          })
+          assert(rowCount == coloredCount && colCount == coloredCount)
+        }
     }
   }
 }

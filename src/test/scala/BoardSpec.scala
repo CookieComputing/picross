@@ -32,6 +32,30 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
     }
   }
 
+  property("a board's rows and cols should not be empty") {
+    forAll(sameSizedTiles) { tiles =>
+      Board.newBoard(tiles) match
+        case None => failed()
+        case Some(board) =>
+          val rowSize = Board.numRows(board)
+          val colSize = Board.numCols(board)
+
+          assert((0 until rowSize).forall( row => {
+              Board.getRow(row)(using board) match
+                case None => false
+                case Some(list) => list.nonEmpty
+            }
+          ))
+
+          assert((0 until colSize).forall( col => {
+            Board.getCol(col)(using board) match
+              case None => false
+              case Some(list) => list.nonEmpty
+          }
+          ))
+    }
+  }
+
   property("a board's tiles should be appropriately colored based on what was created") {
     forAll(sameSizedTiles) { case (tiles: List[List[Tile]]) => {
         val board = Board.newBoard(tiles)

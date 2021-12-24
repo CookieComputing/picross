@@ -17,14 +17,23 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
         move match
           case _: TileCross => passed
           case coloring: TileColor => {
+            val TileColor(Posn(row, col)) = coloring
+
             val origBoard = game.playerMarkedBoard
+            val origColor = origBoard(row)(col)
+
             assert(game.makeBoardMove(coloring).isDefined)
             val changedBoard = game.playerMarkedBoard
+            val changedColor = changedBoard(row)(col)
             assert(origBoard != changedBoard)
+            assert(origColor != changedColor)
+
             assert(game.makeBoardMove(coloring).isDefined)
             val dupOfOrigBoard = game.playerMarkedBoard
+            val dupOfOrigColor = dupOfOrigBoard(row)(col)
             val newBoard = game.getSolution
             assert(origBoard == dupOfOrigBoard)
+            assert(origColor == dupOfOrigColor)
           }
       }
     }

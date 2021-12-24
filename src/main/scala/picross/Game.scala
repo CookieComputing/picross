@@ -11,25 +11,37 @@ import picross.BoardMove.*
  */
 class Game(solution: Board,
            private var moveHistory: List[PlayerMove]) {
+  // Game is one of the few locations in the code that has mutation
+  // for the sake of efficiency
   given Board = solution
   private val internalBoard = Array.tabulate(Board.numRows(solution))(_ =>
     Array.tabulate(Board.numCols(solution))(_ => false))
+  // Optimization to enable fast completion checking for after game render
+  private var correct = 0
+  private val solutionCorrect = (0 until Board.numRows(solution)).map(row =>
+    (0 until Board.numCols(solution)).count(col =>
+      Board.tileAt(Posn(row, col)).exists(Board.colored))
+  ).sum
 
   moveHistory.foldRight(())((move, _) => move match
     case c: ClueCross => makeClueMove(c)
-    case b: BoardMove => makeBoardMove(b)
+    case b: BoardMove => {
+      makeBoardMove(b)
+      b match
+        case TileColor(pos) => Board.tileAt(pos).map(t => {
+          val Posn(row, col) = pos
+          if Board.colored(t) == internalBoard(row)(col) then
+            correct += 1
+        })
+        case _ => ()
+    }
   )
 
   /**
    * Determine if the game is complete.
    * @return
    */
-  def completed: Boolean =
-    (0 until Board.numRows(solution)).forall( row =>
-      (0 until Board.numCols(solution)).forall( col =>
-        Board.tileAt(Posn(row, col)).exists(Board.colored) == internalBoard(row)(col)
-      )
-    )
+  def completed: Boolean = correct == solutionCorrect
 
   /**
    * Returns a history of the player's past moves.
@@ -47,10 +59,15 @@ class Game(solution: Board,
       val Posn(row, col) = pos
       val prev = internalBoard(row)(col)
       Some(internalBoard(row).update(col, !prev))
+      if !prev then
+        correct -= 1
       // TODO: Strip out any tile crosses on that tile
     })
     case TileCross(pos, _) => tileAt(pos).map(_ => {
       val Posn(row, col) = pos
+      // Need to clear out any correct tiles if crossed
+      if internalBoard(row)(col) then
+        correct -= 1
       Some(internalBoard(row).update(col, false))
 
       // TODO: Add support for crosses

@@ -59,20 +59,22 @@ class Game(solution: Board,
     case TileColor(pos) => tileAt(pos).map(_ => {
       val Posn(row, col) = pos
       val prev = internalBoard(row)(col)
-      Some(internalBoard(row).update(col, if (prev == Color) then Blank else Color))
-      if prev == Color then
-        correct -= 1
-      // TODO: Strip out any tile crosses on that tile
+      updateCorrectnessTile(if prev == Color then Blank else Color, pos)
     })
     case TileCross(pos, _) => tileAt(pos).map(_ => {
-      val Posn(row, col) = pos
-      // Need to clear out any correct tiles if crossed
+      updateCorrectnessTile(Cross, pos)
+    })
+
+  // If a tile should be colored but is changed, decrement correct tile
+  private def updateCorrectnessTile(newTile: PlayerTile, pos: Posn): Unit =
+    val Posn(row, col) = pos
+    if !(0 <= row && row < internalBoard.length && 0 <= col && col <= internalBoard(row).length) then
+      None
+    else {
       if internalBoard(row)(col) == Color then
         correct -= 1
-      Some(internalBoard(row).update(col, Blank))
-
-      // TODO: Add support for crosses
-    })
+      internalBoard(row).update(col, newTile)
+    }
 
   /**
    * Performs a clue based move.

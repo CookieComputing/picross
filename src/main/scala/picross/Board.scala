@@ -38,7 +38,7 @@ object Board {
   /**
    * Retrieves the tile located at (row, col)
    *
-   * @param posn the position of the tile
+   * @param posn  the position of the tile
    * @param board Board The board to be checked
    * @return Some(tile) located at (row, col) for the given board, None if out of bounds
    */
@@ -52,7 +52,7 @@ object Board {
     if inBounds(board, row) then Some(board(row).toList) else None
 
   def getCol(col: Int)(using board: Board): Option[List[Tile]] =
-    // A board is guaranteed to have at least one element upon generation
+  // A board is guaranteed to have at least one element upon generation
     if inBounds(board(0), col) then
       Some((for {r <- board.indices} yield Board.tileAt(Posn(r, col))).toList.flatten)
     else None
@@ -67,6 +67,7 @@ object Board {
 
   /**
    * Returns the number of rows this board has
+   *
    * @param board the board to get rows from
    * @return the number of rows the board has
    */
@@ -74,6 +75,7 @@ object Board {
 
   /**
    * Returns the number of cols this board has
+   *
    * @param board the board to get cols from
    * @return the number of cols the board has
    */

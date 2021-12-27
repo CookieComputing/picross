@@ -1,9 +1,10 @@
 package picross
 
 import picross.Board.{Board, tileAt}
-import picross.Game.PlayerMove
+import picross.Game.{PlayerMove, PlayerTile}
 import picross.ClueCross
 import picross.BoardMove.*
+import picross.Game.PlayerTile.*
 
 /**
  * A Game is an instance of a Picross game, containing information about the board and what the player
@@ -14,8 +15,9 @@ class Game(solution: Board,
   // Game is one of the few locations in the code that has mutation
   // for the sake of efficiency
   given Board = solution
+
   private val internalBoard = Array.tabulate(Board.numRows(solution))(_ =>
-    Array.tabulate(Board.numCols(solution))(_ => false))
+    Array.tabulate(Board.numCols(solution))(_ => Blank))
   // Optimization to enable fast completion checking for after game render
   private var correct = 0
   private val solutionCorrect = (0 until Board.numRows(solution)).map(row =>
@@ -30,7 +32,7 @@ class Game(solution: Board,
       (b match
         case TileColor(pos) => Board.tileAt(pos).map(t => {
           val Posn(row, col) = pos
-          if Board.colored(t) == internalBoard(row)(col) then
+          if Board.colored(t) == (internalBoard(row)(col) == Color) then
             correct += 1
         })
         case _ => ())
@@ -57,17 +59,17 @@ class Game(solution: Board,
     case TileColor(pos) => tileAt(pos).map(_ => {
       val Posn(row, col) = pos
       val prev = internalBoard(row)(col)
-      Some(internalBoard(row).update(col, !prev))
-      if !prev then
+      Some(internalBoard(row).update(col, if (prev == Color) then Blank else Color))
+      if prev == Color then
         correct -= 1
       // TODO: Strip out any tile crosses on that tile
     })
     case TileCross(pos, _) => tileAt(pos).map(_ => {
       val Posn(row, col) = pos
       // Need to clear out any correct tiles if crossed
-      if internalBoard(row)(col) then
+      if internalBoard(row)(col) == Color then
         correct -= 1
-      Some(internalBoard(row).update(col, false))
+      Some(internalBoard(row).update(col, Blank))
 
       // TODO: Add support for crosses
     })
@@ -85,7 +87,7 @@ class Game(solution: Board,
    * @return the player's marked board, true indicates that the player has marked the board, while false means there is
    *         no marking
    */
-  def playerMarkedBoard: IndexedSeq[IndexedSeq[Boolean]] = internalBoard.map(_.toIndexedSeq).toIndexedSeq
+  def playerMarkedBoard: IndexedSeq[IndexedSeq[PlayerTile]] = internalBoard.map(_.toIndexedSeq).toIndexedSeq
 
   def getSolution: Board = solution
 }
@@ -93,6 +95,8 @@ class Game(solution: Board,
 object Game {
   type PlayerMove = BoardMove | ClueCross
   type Colored = Boolean
+  enum PlayerTile:
+    case Color, Blank, Cross
   /**
    * Creates a brand new game instance
    * @return a new game

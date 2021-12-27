@@ -7,7 +7,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import picross.Board.Board
 import picross.{Board, BoardMove, Game, Posn}
 import picross.BoardMove.*
-import picross.Game.PlayerMove
+import picross.Game.{PlayerMove, PlayerTile}
 
 class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
   property("applying a move should change the board, while " +
@@ -60,7 +60,7 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
               } do {
                 assert(newBoard(r)(c) == origBoard(r)(c))
               }
-              assert(newBoard(row)(col) == !origBoard(row)(col))
+              assert(newBoard(row)(col) != origBoard(row)(col))
       }
       }
     }
@@ -89,10 +89,10 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
       val solution = game.getSolution
       given Board = solution
 
-      def completed(board: IndexedSeq[IndexedSeq[Boolean]]): Boolean = {
+      def completed(board: IndexedSeq[IndexedSeq[PlayerTile]]): Boolean = {
         (0 until Board.numRows(solution)).forall(row =>
           (0 until Board.numCols(solution)).forall(col =>
-            Board.tileAt(Posn(row, col)).exists(Board.colored(_) == board(row)(col))
+            Board.tileAt(Posn(row, col)).exists(Board.colored(_) == (board(row)(col) == PlayerTile.Color))
           )
         )
       }
@@ -105,8 +105,9 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
           } do {
             Board.tileAt(Posn(r, c)).foreach(tile => {
               (Board.colored(tile), board(r)(c)) match
-                case (true, true) => ()
-                case (false, false) => ()
+                case (true, PlayerTile.Color) => ()
+                case (false, PlayerTile.Blank) => ()
+                case (false, PlayerTile.Cross) => ()
                 case _ => game.makeBoardMove(TileColor(Posn(r,c)))
             })
         }

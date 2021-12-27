@@ -38,8 +38,8 @@ object Board {
   /**
    * Retrieves the tile located at (row, col)
    *
-   * @param the position of the tile
-   * @param Board The board to be checked
+   * @param posn the position of the tile
+   * @param board Board The board to be checked
    * @return Some(tile) located at (row, col) for the given board, None if out of bounds
    */
   def tileAt(posn: Posn)(using board: Board): Option[Tile] = {
@@ -54,7 +54,7 @@ object Board {
   def getCol(col: Int)(using board: Board): Option[List[Tile]] =
     // A board is guaranteed to have at least one element upon generation
     if inBounds(board(0), col) then
-      Some((for {r <- 0 until board.size} yield Board.tileAt(Posn(r, col))).toList.flatten)
+      Some((for {r <- board.indices} yield Board.tileAt(Posn(r, col))).toList.flatten)
     else None
 
   /**

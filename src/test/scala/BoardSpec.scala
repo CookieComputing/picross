@@ -57,18 +57,17 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
   }
 
   property("a board's tiles should be appropriately colored based on what was created") {
-    forAll(sameSizedTiles) { case (tiles: List[List[Tile]]) => {
-        val board = Board.newBoard(tiles)
+    forAll(sameSizedTiles) { case tiles: List[List[Tile]] =>
+      val board = Board.newBoard(tiles)
 
-        board match
-          case None => failed()
-          case Some(b) =>
-            assert(tiles.map(_.zipWithIndex).zipWithIndex.forall(
-              (row, rowIndex) => row.forall(
-                (tile, colIndex) => Board.tileAt(Posn(rowIndex, colIndex))(using b) match
-                  case None => false
-                  case Some(boardTile) => Board.colored(boardTile) == Board.colored(tile))))
-      }
+      board match
+        case None => failed()
+        case Some(b) =>
+          assert(tiles.map(_.zipWithIndex).zipWithIndex.forall(
+            (row, rowIndex) => row.forall(
+              (tile, colIndex) => Board.tileAt(Posn(rowIndex, colIndex))(using b) match
+                case None => false
+                case Some(boardTile) => Board.colored(boardTile) == Board.colored(tile))))
     }
   }
 

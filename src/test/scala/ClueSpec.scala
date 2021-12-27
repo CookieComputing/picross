@@ -6,6 +6,7 @@ import org.scalacheck.Prop.passed
 import org.scalatest.FutureOutcome.failed
 import org.scalatest.OptionValues
 import org.scalatest.prop.TableDrivenPropertyChecks.*
+import org.scalatest.prop.TableFor3
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import picross.Board.{Board, Tile}
@@ -15,7 +16,7 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks with OptionValu
   property("clues should pass the table tests for getClueForRow") {
     forAll(exampleBoards) {
       (tiles, rows, _) =>
-        Board.newBoard(tiles.map(_.map(Board.newTile(_)))) match
+        Board.newBoard(tiles.map(_.map(Board.newTile))) match
           case None => failed()
           case Some(board) =>
             assert(rows.zipWithIndex.forall(
@@ -29,7 +30,7 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks with OptionValu
   property("clues should pass the table tests for getClueForCol") {
     forAll(exampleBoards) {
       (tiles, _, cols) =>
-        Board.newBoard(tiles.map(_.map(Board.newTile(_)))) match
+        Board.newBoard(tiles.map(_.map(Board.newTile))) match
           case None => failed()
           case Some(board) =>
             assert(cols.zipWithIndex.forall(
@@ -40,17 +41,16 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks with OptionValu
     }
   }
 
-  property("Every's clues + the individual spaces between clues should be <= row/col size") {
+  property("Every clues + the individual spaces between clues should be <= row/col size") {
     forAll(BoardSpec.validBoardGen) { board =>
       val rowSize = Board.numRows(board)
       val colSize = Board.numCols(board)
       assert((0 until rowSize).forall( row =>
         Clue.getClueForRow(row)(using board) match
           case None => false
-          case Some(Clue(clues)) => {
+          case Some(Clue(clues)) =>
             // -1 because we are counting the gaps between clues
             (clues.sum + clues.size - 1) <= colSize
-          }
       ))
 
       assert((0 until colSize).forall(col =>
@@ -68,7 +68,7 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks with OptionValu
 
       Board.newBoard(tiles) match
         case None => failed()
-        case Some(board) => {
+        case Some(board) =>
           val rowSize = Board.numRows(board)
           val colSize = Board.numCols(board)
 
@@ -80,13 +80,12 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks with OptionValu
             acc + Clue.getClueForRow(row)(using board).value.clues.sum
           })
           assert(rowCount == coloredCount && colCount == coloredCount)
-        }
     }
   }
 }
 
 object ClueSpec {
-  val exampleBoards = Table(
+  val exampleBoards: TableFor3[List[List[Boolean]], List[List[Int]], List[List[Int]]] = Table(
     ("colors", "expected rows", "expected cols"),
     (List(
       List(true, true, false, true),

@@ -25,16 +25,15 @@ class Game(solution: Board,
 
   moveHistory.foldRight(())((move, _) => move match
     case c: ClueCross => makeClueMove(c)
-    case b: BoardMove => {
+    case b: BoardMove =>
       makeBoardMove(b)
-      b match
+      (b match
         case TileColor(pos) => Board.tileAt(pos).map(t => {
           val Posn(row, col) = pos
           if Board.colored(t) == internalBoard(row)(col) then
             correct += 1
         })
-        case _ => ()
-    }
+        case _ => ())
   )
 
   /**

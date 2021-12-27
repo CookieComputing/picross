@@ -17,7 +17,7 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
         move match
           // TODO add cross support
           case _: TileCross => passed
-          case coloring: TileColor => {
+          case coloring: TileColor =>
             val TileColor(Posn(row, col)) = coloring
 
             val origBoard = game.playerMarkedBoard
@@ -35,7 +35,6 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
             val newBoard = game.getSolution
             assert(origBoard == dupOfOrigBoard)
             assert(origColor == dupOfOrigColor)
-          }
       }
     }
   }
@@ -52,7 +51,7 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
           move match
             // TODO: Add cross support
             case _ : TileCross => passed
-            case TileColor(Posn(row, col)) => {
+            case TileColor(Posn(row, col)) =>
               for {
                 r <- 0 until Board.numRows(solution)
                 c <- 0 until Board.numCols(solution)
@@ -62,8 +61,7 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
                 assert(newBoard(r)(c) == origBoard(r)(c))
               }
               assert(newBoard(row)(col) == !origBoard(row)(col))
-            }
-        }
+      }
       }
     }
   }
@@ -93,19 +91,19 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
 
       def completed(board: IndexedSeq[IndexedSeq[Boolean]]): Boolean = {
         (0 until Board.numRows(solution)).forall(row =>
-          ((0 until Board.numCols(solution)).forall(col =>
+          (0 until Board.numCols(solution)).forall(col =>
             Board.tileAt(Posn(row, col)).exists(Board.colored(_) == board(row)(col))
-          ))
+          )
         )
       }
 
-      if (!completed(board)) then
+      if !completed(board) then
         assert(!game.completed)
         for {
           r <- 0 until Board.numRows(solution)
             c <- 0 until Board.numCols(solution)
           } do {
-            Board.tileAt(Posn(r, c)).map(tile => {
+            Board.tileAt(Posn(r, c)).foreach(tile => {
               (Board.colored(tile), board(r)(c)) match
                 case (true, true) => ()
                 case (false, false) => ()
@@ -115,7 +113,6 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
         val newBoard = game.playerMarkedBoard
         assert(completed(newBoard))
         assert(game.completed)
-       end if
     }
   }
 }

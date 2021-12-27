@@ -1,7 +1,7 @@
 package picross
 
 /**
- * Datatypes representing the operations on a Picross board.
+ * Data types representing the operations on a Picross board.
  */
 
 enum BoardMove:

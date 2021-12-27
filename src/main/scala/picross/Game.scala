@@ -62,7 +62,9 @@ class Game(solution: Board,
       updateCorrectnessTile(if prev == Color then Blank else Color, pos)
     })
     case TileCross(pos, _) => tileAt(pos).map(_ => {
-      updateCorrectnessTile(Cross, pos)
+      val Posn(row, col) = pos
+      val prev = internalBoard(row)(col)
+      updateCorrectnessTile(if prev == Cross then Blank else Cross, pos)
     })
 
   // If a tile should be colored but is changed, decrement correct tile

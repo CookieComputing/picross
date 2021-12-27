@@ -14,27 +14,25 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
     "re-applying the same move to a board should cause no effect") {
     forAll(validGameGen) { (game: Game) =>
       forAll(validPlayerBoardMoveGen(game.getSolution)) { (move: BoardMove) =>
-        move match
-          // TODO add cross support
-          case _: TileCross => passed
-          case coloring: TileColor =>
-            val TileColor(Posn(row, col)) = coloring
+        val Posn(row, col) = move match
+          case TileColor(posn) => posn
+          case TileCross(posn, _) => posn
 
-            val origBoard = game.playerMarkedBoard
-            val origColor = origBoard(row)(col)
+        val origBoard = game.playerMarkedBoard
+        val origColor = origBoard(row)(col)
 
-            assert(game.makeBoardMove(coloring).isDefined)
-            val changedBoard = game.playerMarkedBoard
-            val changedColor = changedBoard(row)(col)
-            assert(origBoard != changedBoard)
-            assert(origColor != changedColor)
+        assert(game.makeBoardMove(move).isDefined)
+        val changedBoard = game.playerMarkedBoard
+        val changedColor = changedBoard(row)(col)
+        assert(origBoard != changedBoard)
+        assert(origColor != changedColor)
 
-            assert(game.makeBoardMove(coloring).isDefined)
-            val dupOfOrigBoard = game.playerMarkedBoard
-            val dupOfOrigColor = dupOfOrigBoard(row)(col)
-            val newBoard = game.getSolution
-            assert(origBoard == dupOfOrigBoard)
-            assert(origColor == dupOfOrigColor)
+        assert(game.makeBoardMove(move).isDefined)
+        val dupOfOrigBoard = game.playerMarkedBoard
+        val dupOfOrigColor = dupOfOrigBoard(row)(col)
+        val newBoard = game.getSolution
+        assert(origBoard == dupOfOrigBoard)
+        assert(origColor == dupOfOrigColor)
       }
     }
   }
@@ -43,15 +41,10 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
     forAll(validGameGen) { (game: Game) =>
       forAll(validPlayerBoardMoveGen(game.getSolution)) { (move: BoardMove) => {
           val origBoard = game.playerMarkedBoard
-
-          assert(game.makeBoardMove(move).isDefined)
-
           val solution = game.getSolution
-          val newBoard = game.playerMarkedBoard
-          move match
-            // TODO: Add cross support
-            case _ : TileCross => passed
-            case TileColor(Posn(row, col)) =>
+
+          def assertSameForAllBut(newBoard: IndexedSeq[IndexedSeq[PlayerTile]], posn: Posn): Unit = {
+              val Posn(row, col) = posn
               for {
                 r <- 0 until Board.numRows(solution)
                 c <- 0 until Board.numCols(solution)
@@ -61,6 +54,29 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
                 assert(newBoard(r)(c) == origBoard(r)(c))
               }
               assert(newBoard(row)(col) != origBoard(row)(col))
+            }
+
+          move match
+              case TileCross(pos, _) =>
+                val Posn(row, col) = pos
+                assert(game.makeBoardMove(move).isDefined)
+
+                val newBoard = game.playerMarkedBoard
+                assertSameForAllBut(newBoard, pos)
+                if origBoard(row)(col) == PlayerTile.Cross then
+                  assert(newBoard(row)(col) == PlayerTile.Blank)
+                else
+                  assert(newBoard(row)(col) == PlayerTile.Cross)
+              case TileColor(pos) =>
+                val Posn(row, col) = pos
+                assert(game.makeBoardMove(move).isDefined)
+
+                val newBoard = game.playerMarkedBoard
+                assertSameForAllBut(newBoard, pos)
+                if origBoard(row)(col) == PlayerTile.Color then
+                  assert(newBoard(row)(col) == PlayerTile.Blank)
+                else
+                  assert(newBoard(row)(col) == PlayerTile.Color)
       }
       }
     }

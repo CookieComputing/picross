@@ -13,4 +13,4 @@ enum BoardMove:
 
 // rowClue determines whether the cross is applied to a row
 // or a column, and the index represents the ith row/col.
-case class ClueCross(rowClue: Boolean, index: Int)
+case class ClueCross(rowClue: Boolean, index: Int, tileIndex: Int)

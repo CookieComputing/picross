@@ -2,12 +2,15 @@ import BoardSpec.*
 import GameSpec.{validGameGen, validPlayerBoardMoveGen}
 import org.scalacheck.Gen
 import org.scalacheck.Prop.passed
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import picross.Board.Board
-import picross.{Board, BoardMove, Game, Posn}
+import picross.{Board, BoardMove, Clue, ClueCross, Game, Posn}
 import picross.BoardMove.*
 import picross.Game.{PlayerMove, PlayerTile}
+import picross.Clue.{getClueForCol, getClueForRow}
+import picross.Game.PlayerTile.Blank
 
 class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
   property("applying a move should change the board, while " +
@@ -18,21 +21,22 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
           case TileColor(posn) => posn
           case TileCross(posn, _) => posn
 
-        val origBoard = game.playerMarkedBoard
-        val origColor = origBoard(row)(col)
+        val origColor = game.playerMarkedBoard(row)(col)
 
         assert(game.makeBoardMove(move).isDefined)
         val changedBoard = game.playerMarkedBoard
         val changedColor = changedBoard(row)(col)
-        assert(origBoard != changedBoard)
         assert(origColor != changedColor)
 
         assert(game.makeBoardMove(move).isDefined)
-        val dupOfOrigBoard = game.playerMarkedBoard
-        val dupOfOrigColor = dupOfOrigBoard(row)(col)
-        val newBoard = game.getSolution
-        assert(origBoard == dupOfOrigBoard)
-        assert(origColor == dupOfOrigColor)
+        val dupOfOrigColor = game.playerMarkedBoard(row)(col)
+        if origColor == Blank then
+          assert(origColor == dupOfOrigColor)
+        else
+          (move, origColor) match
+            case (_: TileCross, PlayerTile.Cross) => assert(origColor == dupOfOrigColor)
+            case (_: TileColor, PlayerTile.Color) => assert(origColor == dupOfOrigColor)
+            case _ => assert(origColor != dupOfOrigColor)
       }
     }
   }
@@ -93,7 +97,7 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
 
   property("a game's history can be used to recreate the exact same " +
     "player marked board as the current game has") { (origGame: Game) => {
-      val newGame = Game(origGame.getSolution, origGame.history)
+      val newGame = Game(origGame.getSolution, origGame.history).value
       assert(origGame.playerMarkedBoard == newGame.playerMarkedBoard)
     }
   }
@@ -132,6 +136,26 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
         assert(game.completed)
     }
   }
+
+//  property("applying a cross move on the board should apply the opposite state to the provided tile") {
+//    forAll(validGameGen) {(game: Game) =>
+//      forAll(validPlayerCrossMoveGen(game.getSolution)) { (cross: ClueCross) => {
+//        given Board = game.getSolution
+//        def getCurrVal = () => if cross.rowClue then
+//          game.getRowCrosses(cross.index)(cross.tileIndex)
+//        else
+//          game.getColCrosses(cross.index)(cross.tileIndex)
+//
+//        val origVal = getCurrVal()
+//
+//        game.makeClueMove(cross)
+//
+//        val newVal = getCurrVal()
+//        assert(origVal != newVal)
+//        }
+//      }
+//    }
+//  }
 }
 
 object GameSpec {
@@ -141,9 +165,16 @@ object GameSpec {
     genFunc <- Gen.oneOf(List(TileColor(_), TileCross(_, false)))
   } yield genFunc(Posn(row, col))
 
+//  val validPlayerCrossMoveGen: Board => Gen[ClueCross] = board => for {
+//    rowCross <- arbitrary[Boolean]
+//    index <- Gen.chooseNum(0, (if rowCross then Board.numRows(board) else Board.numCols(board)) - 1)
+//    tileIndex <- Gen.chooseNum(0, math.max((if rowCross then getClueForCol(index)(using board)
+//                                          else getClueForCol(index)(using board)).size-1), 0)
+//  } yield ClueCross(rowCross, index, tileIndex)
+
   val validGameGen: Gen[Game] = for {
     board <- validBoardGen
-    historySize <- Gen.const(0)
+    historySize <- Gen.chooseNum(0, 10)
     history <- Gen.listOfN(historySize, validPlayerBoardMoveGen(board))
-  } yield Game(board, history)
+  } yield Game(board, history).value
 }

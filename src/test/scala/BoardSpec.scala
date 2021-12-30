@@ -4,11 +4,11 @@ import org.scalacheck.Gen
 import org.scalacheck.Prop.passed
 import org.scalatest.FutureOutcome.failed
 import org.scalatest.OptionValues
+import org.scalatest.prop.TableDrivenPropertyChecks.*
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import org.scalatest.prop.TableDrivenPropertyChecks.*
-import picross.{Board, Posn}
 import picross.Board.{Board, Tile}
+import picross.{Board, Posn}
 
 import scala.math
 
@@ -40,14 +40,14 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
           val rowSize = Board.numRows(board)
           val colSize = Board.numCols(board)
 
-          assert((0 until rowSize).forall( row => {
-              Board.getRow(row)(using board) match
-                case None => false
-                case Some(list) => list.nonEmpty
-            }
+          assert((0 until rowSize).forall(row => {
+            Board.getRow(row)(using board) match
+              case None => false
+              case Some(list) => list.nonEmpty
+          }
           ))
 
-          assert((0 until colSize).forall( col => {
+          assert((0 until colSize).forall(col => {
             Board.getCol(col)(using board) match
               case None => false
               case Some(list) => list.nonEmpty
@@ -78,10 +78,10 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
         case None => failed()
         case Some(board) =>
           assert((0 until tiles.size).forall(
-              row => Board.getRow(row)(using board) match
-                case None => false
-                case Some(rowTiles) =>
-                    rowTiles == tiles(row)))
+            row => Board.getRow(row)(using board) match
+              case None => false
+              case Some(rowTiles) =>
+                rowTiles == tiles(row)))
     }
   }
 
@@ -95,7 +95,8 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
             col => Board.getCol(col)(using board) match
               case None => false
               case Some(colTiles) =>
-                colTiles == (for { r <- 0 until tiles.size } yield tiles(r)(col)).toList))}
+                colTiles == (for {r <- 0 until tiles.size} yield tiles(r)(col)).toList))
+    }
   }
 
   property("a board should have > 0 rows and cols") {
@@ -112,7 +113,7 @@ class BoardSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
       Board.newBoard(tiles) match
         case None => failed()
         case Some(board) =>
-            assert(Board.numRows(board) == rowSize && Board.numCols(board) == colSize)
+          assert(Board.numRows(board) == rowSize && Board.numCols(board) == colSize)
     }
   }
 }

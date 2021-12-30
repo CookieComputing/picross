@@ -1,10 +1,10 @@
 package picross
 
 import picross.Board.{Board, tileAt}
-import picross.Game.{PlayerMove, PlayerTile}
-import picross.ClueCross
 import picross.BoardMove.*
+import picross.ClueCross
 import picross.Game.PlayerTile.*
+import picross.Game.{PlayerMove, PlayerTile}
 
 /**
  * A Game is an instance of a Picross game, containing information about the board and what the player
@@ -37,18 +37,21 @@ class Game(solution: Board,
 
   /**
    * Determine if the game is complete.
+   *
    * @return
    */
   def completed: Boolean = correct == solutionCorrect
 
   /**
    * Returns a history of the player's past moves.
+   *
    * @return a list of moves
    */
   def history: List[PlayerMove] = moveHistory
 
   /**
    * Performs the move action requested on the board.
+   *
    * @param move the move to perform
    * @return Some(()) if successful, None if not
    */
@@ -81,6 +84,7 @@ class Game(solution: Board,
 
   /**
    * Performs a clue based move.
+   *
    * @param move the move to perform
    * @return Some(()) if success, None if not
    */
@@ -95,18 +99,21 @@ class Game(solution: Board,
 
   /**
    * Get player crosses for the rows
+   *
    * @return row crosses
    */
   def getRowCrosses: List[List[Boolean]] = rowCross.map(_.toList).toList
 
   /**
    * Get player crosses for the columns
+   *
    * @return col crosses
    */
   def getColCrosses: List[List[Boolean]] = colCross.map(_.toList).toList
 
   /**
    * Returns the player's marked board
+   *
    * @return the player's marked board, true indicates that the player has marked the board, while false means there is
    *         no marking
    */
@@ -118,21 +125,26 @@ class Game(solution: Board,
 object Game {
   type PlayerMove = BoardMove | ClueCross
   type Colored = Boolean
+
   enum PlayerTile:
     case Color, Blank, Cross
+
   /**
    * Creates a brand new game instance
+   *
    * @return a new game
    */
   def apply(board: Board): Option[Game] = Game(board, List.empty[PlayerMove])
 
   /**
    * Creates a new Game and applies all past moves to the board
+   *
    * @param history A list of moves that have occurred in the past
    * @return a new game with a potential list of moves applied
    */
   def apply(board: Board, history: List[PlayerMove]): Option[Game] = {
     given Board = board
+
     val rowClues = (0 until Board.numRows(board)).flatMap(Clue.getClueForRow)
     val colClues = (0 until Board.numCols(board)).flatMap(Clue.getClueForCol)
     Some(new Game(board, history, rowClues, colClues))

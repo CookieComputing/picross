@@ -17,6 +17,7 @@ case class Clue(clues: List[Int])
 object Clue {
   /**
    * Retrieves clues for the provided column and board.
+   *
    * @param col the requested column number
    * @return Some(Clue) if col is a valid column number, None otherwise
    */
@@ -25,6 +26,7 @@ object Clue {
 
   /**
    * Retrieves clues for the provided row and board.
+   *
    * @param row the requested column number
    * @return Some(Clue) if row is a valid column number, None otherwise
    */
@@ -36,9 +38,10 @@ object Clue {
     def buildClues(tiles: List[Tile], streak: Int, acc: List[Int]): List[Int] = tiles match
       case Nil if streak > 0 => streak :: acc
       case Nil => acc
-      case tile :: rest if Board.colored(tile) => buildClues(rest, streak+1, acc)
+      case tile :: rest if Board.colored(tile) => buildClues(rest, streak + 1, acc)
       case tile :: rest if !Board.colored(tile) && streak > 0 => buildClues(rest, 0, streak :: acc)
       case _ :: rest => buildClues(rest, streak, acc)
+
     Clue(buildClues(tiles, 0, List.empty[Int]).reverse)
   }
 }

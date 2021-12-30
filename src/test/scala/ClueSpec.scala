@@ -45,7 +45,7 @@ class ClueSpec extends AnyPropSpec with ScalaCheckPropertyChecks with OptionValu
     forAll(BoardSpec.validBoardGen) { board =>
       val rowSize = Board.numRows(board)
       val colSize = Board.numCols(board)
-      assert((0 until rowSize).forall( row =>
+      assert((0 until rowSize).forall(row =>
         Clue.getClueForRow(row)(using board) match
           case None => false
           case Some(Clue(clues)) =>

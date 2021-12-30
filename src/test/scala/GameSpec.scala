@@ -1,16 +1,16 @@
 import BoardSpec.*
 import GameSpec.{maybeCrossMove, validGameGen, validPlayerBoardMoveGen}
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Prop.passed
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import picross.Board.Board
-import picross.{Board, BoardMove, Clue, ClueCross, Game, Posn}
 import picross.BoardMove.*
-import picross.Game.{PlayerMove, PlayerTile}
 import picross.Clue.{getClueForCol, getClueForRow}
 import picross.Game.PlayerTile.Blank
+import picross.Game.{PlayerMove, PlayerTile}
+import picross.*
 
 import scala.util.Random
 

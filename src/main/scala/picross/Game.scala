@@ -86,7 +86,7 @@ class Game(solution: Board,
    */
   def makeClueMove(move: ClueCross): Option[Unit] = {
     val crosses = if move.rowClue then rowCross else colCross
-    if !(inBounds(crosses, move.index) && inBounds(crosses, move.tileIndex)) then
+    if !(inBounds(crosses, move.index) && inBounds(crosses(move.index), move.tileIndex)) then
       None
     else
       val xs = crosses(move.index)

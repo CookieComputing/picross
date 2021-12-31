@@ -69,8 +69,8 @@ class Game(solution: Board,
         val prev = internalBoard(row)(col)
         updateCorrectnessTile(if prev == Cross then Blank else Cross, pos)
       })).map(_ => {
-        moveHistory = move :: moveHistory
-      })
+      moveHistory = move :: moveHistory
+    })
 
   private def inBounds[A](xs: Seq[A], index: Int): Boolean = 0 <= index && index < xs.size
 

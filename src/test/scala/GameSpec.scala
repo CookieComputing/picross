@@ -168,6 +168,17 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
     }
   }
 
+  property("undoing an entire move history should result in a blank board and blank row/col cross list") {
+    forAll(validGameGen) { (game: Game) => {
+      game.history.foreach(_ => game.undo())
+
+      assert(game.playerMarkedBoard.forall(_.forall(_ == Blank)))
+      assert(game.getRowCrosses.forall(_.forall(_ == false)))
+      assert(game.getColCrosses.forall(_.forall(_ == false)))
+    }
+    }
+  }
+
   property("a game is considered completed if and only if just player " +
     "marked board's entries are indicated as true for all " +
     "colored tiles") { (game: Game) => {

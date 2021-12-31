@@ -27,8 +27,8 @@ class Game(solution: Board,
       Board.tileAt(Posn(row, col)).exists(Board.colored))
   ).sum
 
-  private val rowCross = rowClues.map(_.clues.map(_ > 0).toArray)
-  private val colCross = colClues.map(_.clues.map(_ > 0).toArray)
+  private val rowCross = rowClues.map(_.clues.map(_ => false).toArray)
+  private val colCross = colClues.map(_.clues.map(_ => false).toArray)
 
   private var moveHistory = List.empty[(PlayerMove, Option[PlayerTile])]
   givenMoveHistory.foldRight(())((move, _) => move match

@@ -125,19 +125,20 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
   property("given n moves to apply to a game, after applying the moves, a game's history" +
     "should be used to fully reimplement the game") {
     forAll(validGameGen) { (game: Game) => {
-      forAll(playerMoveGen(game.getSolution)) { (move: BoardMove | Option[ClueCross]) => {
-        move match
-          case b: BoardMove => {
-            assert(game.makeBoardMove(b).isDefined)
-            val newGame = Game(game.getSolution, game.history).value
-            assert(game.playerMarkedBoard == newGame.playerMarkedBoard)
-          }
-          case Some(c: ClueCross) => {
-            assert(game.makeClueMove(c).isDefined)
-            val newGame = Game(game.getSolution, game.history).value
-            assert(game.getColCrosses == newGame.getColCrosses && game.getRowCrosses == newGame.getRowCrosses)
-          }
-          case None => passed
+      forAll(for {
+        n <- Gen.chooseNum(0, 100)
+        moves <- Gen.listOfN(n, playerMoveGen(game.getSolution))
+      } yield moves) { (moves: List[BoardMove | Option[ClueCross]]) => {
+        def applyMove(move: BoardMove | Option[ClueCross]) = move match
+          case b: BoardMove => game.makeBoardMove(b)
+          case Some(c: ClueCross) => game.makeClueMove(c)
+          case None => Some(())
+
+        moves.foreach(applyMove)
+
+        val newGame = Game(game.getSolution, game.history).value
+        assert(game.playerMarkedBoard == newGame.playerMarkedBoard)
+        assert(game.getColCrosses == newGame.getColCrosses && game.getRowCrosses == newGame.getRowCrosses)
       }
       }
     }

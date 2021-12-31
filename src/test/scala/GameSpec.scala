@@ -1,16 +1,16 @@
 import BoardSpec.*
-import GameSpec.{maybeCrossMove, validGameGen, validPlayerBoardMoveGen}
+import GameSpec.{maybeCrossMove, playerMoveGen, validGameGen, validPlayerBoardMoveGen}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Prop.passed
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import picross.*
 import picross.Board.Board
 import picross.BoardMove.*
 import picross.Clue.{getClueForCol, getClueForRow}
 import picross.Game.PlayerTile.Blank
 import picross.Game.{PlayerMove, PlayerTile}
-import picross.*
 
 import scala.util.Random
 
@@ -89,19 +89,59 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
   }
 
   property("the player marked board has the same dimensions as the" +
-    "game board") { (game: Game) => {
-    val board = game.playerMarkedBoard
-    val solution = game.getSolution
-    assert(board.size == Board.numRows(solution) &&
-      board(0).size == Board.numCols(solution))
-  }
+    "game board") {
+    forAll(validGameGen) { (game: Game) => {
+      val board = game.playerMarkedBoard
+      val solution = game.getSolution
+      assert(board.size == Board.numRows(solution) &&
+        board(0).size == Board.numCols(solution))
+    }
+    }
   }
 
   property("a game's history can be used to recreate the exact same " +
-    "player marked board as the current game has") { (origGame: Game) => {
-    val newGame = Game(origGame.getSolution, origGame.history).value
-    assert(origGame.playerMarkedBoard == newGame.playerMarkedBoard)
+    "player marked board as the current game has") {
+    forAll(validGameGen) { (origGame: Game) => {
+      val newGame = Game(origGame.getSolution, origGame.history).value
+      assert(origGame.playerMarkedBoard == newGame.playerMarkedBoard)
+    }
+    }
   }
+
+  property("applying a move to a game should increase the history's size by one") {
+    forAll(validGameGen) { (game: Game) => {
+      var historyAdd = 0
+      val origHistorySize = game.history.size
+      forAll(validPlayerBoardMoveGen(game.getSolution)) { (move: BoardMove) => {
+        assert(game.makeBoardMove(move).isDefined)
+        historyAdd += 1
+        assert(game.history.size == origHistorySize + historyAdd)
+      }
+      }
+    }
+    }
+  }
+
+  property("given n moves to apply to a game, after applying the moves, a game's history" +
+    "should be used to fully reimplement the game") {
+    forAll(validGameGen) { (game: Game) => {
+      forAll(playerMoveGen(game.getSolution)) { (move: BoardMove | Option[ClueCross]) => {
+        move match
+          case b: BoardMove => {
+            assert(game.makeBoardMove(b).isDefined)
+            val newGame = Game(game.getSolution, game.history).value
+            assert(game.playerMarkedBoard == newGame.playerMarkedBoard)
+          }
+          case Some(c: ClueCross) => {
+            assert(game.makeClueMove(c).isDefined)
+            val newGame = Game(game.getSolution, game.history).value
+            assert(game.getColCrosses == newGame.getColCrosses && game.getRowCrosses == newGame.getRowCrosses)
+          }
+          case None => passed
+      }
+      }
+    }
+    }
   }
 
   property("a game is considered completed if and only if just player " +
@@ -184,9 +224,15 @@ object GameSpec {
     })
   }
 
+  val playerMoveGen: Board => Gen[BoardMove | Option[ClueCross]] = board => for {
+    boardMove <- validPlayerBoardMoveGen(board)
+    clueMove <- maybeCrossMove(board)
+    move <- Gen.oneOf(List[BoardMove | Option[ClueCross]](boardMove, clueMove))
+  } yield move
+
   val validGameGen: Gen[Game] = for {
     board <- validBoardGen
-    historySize <- Gen.chooseNum(0, 10)
+    historySize <- Gen.chooseNum(0, 100)
     history <- Gen.listOfN(historySize, validPlayerBoardMoveGen(board))
   } yield Game(board, history).value
 }

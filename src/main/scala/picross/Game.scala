@@ -11,7 +11,7 @@ import picross.Game.{PlayerMove, PlayerTile}
  * has marked as, as well as a history of the past moves that the Game has seen previously.
  */
 class Game(solution: Board,
-           private var moveHistory: List[PlayerMove],
+           private val givenMoveHistory: List[PlayerMove],
            private val rowClues: IndexedSeq[Clue],
            private val colClues: IndexedSeq[Clue]) {
   // Game is one of the few locations in the code that has mutation
@@ -27,13 +27,15 @@ class Game(solution: Board,
       Board.tileAt(Posn(row, col)).exists(Board.colored))
   ).sum
 
-  moveHistory.foldRight(())((move, _) => move match
+  private val rowCross = rowClues.map(_.clues.map(_ > 0).toArray)
+  private val colCross = colClues.map(_.clues.map(_ > 0).toArray)
+
+  private var moveHistory = List.empty[PlayerMove]
+  givenMoveHistory.foldRight(())((move, _) => move match
     case c: ClueCross => makeClueMove(c)
     case b: BoardMove => makeBoardMove(b)
   )
 
-  private val rowCross = rowClues.map(_.clues.map(_ > 0).toArray)
-  private val colCross = colClues.map(_.clues.map(_ > 0).toArray)
 
   /**
    * Determine if the game is complete.
@@ -55,22 +57,25 @@ class Game(solution: Board,
    * @param move the move to perform
    * @return Some(()) if successful, None if not
    */
-  def makeBoardMove(move: BoardMove): Option[Unit] = move match
-    case TileColor(pos) => tileAt(pos).map(_ => {
-      val Posn(row, col) = pos
-      val prev = internalBoard(row)(col)
-      updateCorrectnessTile(if prev == Color then Blank else Color, pos)
-    })
-    case TileCross(pos, _) => tileAt(pos).map(_ => {
-      val Posn(row, col) = pos
-      val prev = internalBoard(row)(col)
-      updateCorrectnessTile(if prev == Cross then Blank else Cross, pos)
-    })
+  def makeBoardMove(move: BoardMove): Option[Unit] =
+    (move match
+      case TileColor(pos) => tileAt(pos).map(_ => {
+        val Posn(row, col) = pos
+        val prev = internalBoard(row)(col)
+        updateCorrectnessTile(if prev == Color then Blank else Color, pos)
+      })
+      case TileCross(pos, _) => tileAt(pos).map(_ => {
+        val Posn(row, col) = pos
+        val prev = internalBoard(row)(col)
+        updateCorrectnessTile(if prev == Cross then Blank else Cross, pos)
+      })).map(_ => {
+        moveHistory = move :: moveHistory
+      })
 
   private def inBounds[A](xs: Seq[A], index: Int): Boolean = 0 <= index && index < xs.size
 
   // If a tile should be colored but is changed, decrement correct tile
-  private def updateCorrectnessTile(newTile: PlayerTile, pos: Posn): Unit =
+  private def updateCorrectnessTile(newTile: PlayerTile, pos: Posn): Option[Unit] =
     val Posn(row, col) = pos
     if !(inBounds(internalBoard, row) && inBounds(internalBoard(row), col)) then
       None
@@ -79,7 +84,7 @@ class Game(solution: Board,
         correct -= 1
       else if internalBoard(row)(col) != Color && Board.tileAt(pos).exists(Board.colored) then
         correct += 1
-      internalBoard(row).update(col, newTile)
+      Some(internalBoard(row).update(col, newTile))
     }
 
   /**
@@ -94,6 +99,7 @@ class Game(solution: Board,
       None
     else
       val xs = crosses(move.index)
+      moveHistory = move :: moveHistory
       Some(xs.update(move.tileIndex, !xs(move.tileIndex)))
   }
 

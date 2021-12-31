@@ -64,7 +64,7 @@ class Game(solution: Board,
         val prev = internalBoard(row)(col)
         updateCorrectnessTile(if prev == Color then Blank else Color, pos)
       })
-      case TileCross(pos, _) => tileAt(pos).map(_ => {
+      case TileCross(pos) => tileAt(pos).map(_ => {
         val Posn(row, col) = pos
         val prev = internalBoard(row)(col)
         updateCorrectnessTile(if prev == Cross then Blank else Cross, pos)

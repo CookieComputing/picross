@@ -21,7 +21,7 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
       forAll(validPlayerBoardMoveGen(game.getSolution)) { (move: BoardMove) =>
         val Posn(row, col) = move match
           case TileColor(posn) => posn
-          case TileCross(posn, _) => posn
+          case TileCross(posn) => posn
 
         val origColor = game.playerMarkedBoard(row)(col)
 
@@ -63,7 +63,7 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
         }
 
         move match
-          case TileCross(pos, _) =>
+          case TileCross(pos) =>
             val Posn(row, col) = pos
             assert(game.makeBoardMove(move).isDefined)
 
@@ -209,7 +209,7 @@ object GameSpec {
   val validPlayerBoardMoveGen: Board => Gen[BoardMove] = board => for {
     row <- Gen.chooseNum(0, Board.numRows(board) - 1)
     col <- Gen.chooseNum(0, Board.numCols(board) - 1)
-    genFunc <- Gen.oneOf(List(TileColor(_), TileCross(_, false)))
+    genFunc <- Gen.oneOf(List(TileColor(_), TileCross(_)))
   } yield genFunc(Posn(row, col))
 
   val maybeCrossMove: Board => Gen[Option[ClueCross]] = board => for {

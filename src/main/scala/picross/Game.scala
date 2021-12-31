@@ -30,7 +30,7 @@ class Game(solution: Board,
   private val rowCross = rowClues.map(_.clues.map(_ > 0).toArray)
   private val colCross = colClues.map(_.clues.map(_ > 0).toArray)
 
-  private var moveHistory = List.empty[PlayerMove]
+  private var moveHistory = List.empty[(PlayerMove, Option[PlayerTile])]
   givenMoveHistory.foldRight(())((move, _) => move match
     case c: ClueCross => makeClueMove(c)
     case b: BoardMove => makeBoardMove(b)
@@ -49,7 +49,7 @@ class Game(solution: Board,
    *
    * @return a list of moves
    */
-  def history: List[PlayerMove] = moveHistory
+  def history: List[PlayerMove] = moveHistory.map(_._1)
 
   /**
    * Performs the move action requested on the board.
@@ -62,15 +62,13 @@ class Game(solution: Board,
       case TileColor(pos) => tileAt(pos).map(_ => {
         val Posn(row, col) = pos
         val prev = internalBoard(row)(col)
-        updateCorrectnessTile(if prev == Color then Blank else Color, pos)
+        (updateCorrectnessTile(if prev == Color then Blank else Color, pos), prev)
       })
       case TileCross(pos) => tileAt(pos).map(_ => {
         val Posn(row, col) = pos
         val prev = internalBoard(row)(col)
-        updateCorrectnessTile(if prev == Cross then Blank else Cross, pos)
-      })).map(_ => {
-      moveHistory = move :: moveHistory
-    })
+        (updateCorrectnessTile(if prev == Cross then Blank else Cross, pos), prev)
+      })).map { case (op, prev) => op.map { _ => moveHistory = (move, Some(prev)) :: moveHistory } }
 
   private def inBounds[A](xs: Seq[A], index: Int): Boolean = 0 <= index && index < xs.size
 
@@ -99,7 +97,7 @@ class Game(solution: Board,
       None
     else
       val xs = crosses(move.index)
-      moveHistory = move :: moveHistory
+      moveHistory = (move, None) :: moveHistory
       Some(xs.update(move.tileIndex, !xs(move.tileIndex)))
   }
 
@@ -126,6 +124,23 @@ class Game(solution: Board,
   def playerMarkedBoard: IndexedSeq[IndexedSeq[PlayerTile]] = internalBoard.map(_.toIndexedSeq).toIndexedSeq
 
   def getSolution: Board = solution
+
+  /**
+   * Undoes the last move made on the game. If there are no more moves possible, does nothing
+   */
+  def undo(): Unit = {
+    def undoBoardOp[A](board: IndexedSeq[Array[A]], prev: A, row: Int, col: Int): Unit =
+      board(row).update(col, prev)
+      moveHistory = moveHistory.tail
+
+    moveHistory match
+      case (ClueCross(rowMark, index, tileIndex), None) :: _ =>
+        val crosses = if rowMark then rowCross else colCross
+        undoBoardOp(crosses, !crosses(index)(tileIndex), index, tileIndex)
+      case (TileColor(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
+      case (TileCross(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
+      case _ => ()
+  }
 }
 
 object Game {

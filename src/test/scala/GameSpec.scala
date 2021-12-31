@@ -145,6 +145,29 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
     }
   }
 
+  property("Undoing a move should result in the same game board as the board prior to move application") {
+    forAll(validGameGen) { (game: Game) => {
+      forAll(playerMoveGen(game.getSolution)) { (move: BoardMove | Option[ClueCross]) => {
+        val origBoard = game.playerMarkedBoard
+        val origRows = game.getRowCrosses
+        val origCols = game.getColCrosses
+        move match
+          case b: BoardMove => game.makeBoardMove(b)
+          case Some(c: ClueCross) => game.makeClueMove(c)
+          case None => ()
+
+        move match
+          case None => ()
+          case _ => game.undo()
+        assert(origBoard == game.playerMarkedBoard)
+        assert(origRows == game.getRowCrosses)
+        assert(origCols == game.getColCrosses)
+      }
+      }
+    }
+    }
+  }
+
   property("a game is considered completed if and only if just player " +
     "marked board's entries are indicated as true for all " +
     "colored tiles") { (game: Game) => {

@@ -145,19 +145,18 @@ class Game(solution: Board,
    * Undoes the last move made on the game. If there are no more moves possible, does nothing
    */
   def undo(): Unit = {
-    @tailrec
     def undoBoardOp[A](board: IndexedSeq[Array[A]], prev: A, row: Int, col: Int): Unit =
       board(row).update(col, prev)
       undoHistory = moveHistory.head :: undoHistory
       moveHistory = moveHistory.tail
 
-      moveHistory match
-        case (ClueCross(rowMark, index, tileIndex), None) :: _ =>
-          val crosses = if rowMark then rowCross else colCross
-          undoBoardOp(crosses, !crosses(index)(tileIndex), index, tileIndex)
-        case (TileColor(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
-        case (TileCross(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
-        case _ => ()
+    moveHistory match
+      case (ClueCross(rowMark, index, tileIndex), None) :: _ =>
+        val crosses = if rowMark then rowCross else colCross
+        undoBoardOp(crosses, !crosses(index)(tileIndex), index, tileIndex)
+      case (TileColor(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
+      case (TileCross(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
+      case _ => ()
   }
 
   /**
@@ -165,8 +164,9 @@ class Game(solution: Board,
    */
   def redo(): Unit = {
     def redoOp[A](move: PlayerMove): Unit =
+      val undoHistoryTail = undoHistory.tail
       makeMove(move)
-      undoHistory = undoHistory.tail
+      undoHistory = undoHistoryTail
 
     undoHistory match
       case (clueCross: ClueCross, None) :: _ => redoOp(clueCross)

@@ -6,6 +6,8 @@ import picross.ClueCross
 import picross.Game.PlayerTile.*
 import picross.Game.{PlayerMove, PlayerTile}
 
+import scala.annotation.tailrec
+
 /**
  * A Game is an instance of a Picross game, containing information about the board and what the player
  * has marked as, as well as a history of the past moves that the Game has seen previously.
@@ -36,6 +38,7 @@ class Game(solution: Board,
     case b: BoardMove => makeBoardMove(b)
   )
 
+  private var undoHistory = List.empty[(PlayerMove, Option[PlayerTile])]
 
   /**
    * Determine if the game is complete.
@@ -50,6 +53,19 @@ class Game(solution: Board,
    * @return a list of moves
    */
   def history: List[PlayerMove] = moveHistory.map(_._1)
+
+  /**
+   * Performs the move action requested on the board.
+   *
+   * @param move the move to perform
+   * @return Some(()) if successful, None if not
+   */
+  def makeMove(move: BoardMove | ClueCross): Option[Unit] = {
+    undoHistory = List()
+    move match
+      case b: BoardMove => makeBoardMove(b)
+      case c: ClueCross => makeClueMove(c)
+  }
 
   /**
    * Performs the move action requested on the board.
@@ -129,16 +145,33 @@ class Game(solution: Board,
    * Undoes the last move made on the game. If there are no more moves possible, does nothing
    */
   def undo(): Unit = {
+    @tailrec
     def undoBoardOp[A](board: IndexedSeq[Array[A]], prev: A, row: Int, col: Int): Unit =
       board(row).update(col, prev)
+      undoHistory = moveHistory.head :: undoHistory
       moveHistory = moveHistory.tail
 
-    moveHistory match
-      case (ClueCross(rowMark, index, tileIndex), None) :: _ =>
-        val crosses = if rowMark then rowCross else colCross
-        undoBoardOp(crosses, !crosses(index)(tileIndex), index, tileIndex)
-      case (TileColor(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
-      case (TileCross(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
+      moveHistory match
+        case (ClueCross(rowMark, index, tileIndex), None) :: _ =>
+          val crosses = if rowMark then rowCross else colCross
+          undoBoardOp(crosses, !crosses(index)(tileIndex), index, tileIndex)
+        case (TileColor(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
+        case (TileCross(Posn(row, col)), Some(prevTile)) :: _ => undoBoardOp(internalBoard, prevTile, row, col)
+        case _ => ()
+  }
+
+  /**
+   * Redoes the last undo made. If there are no possible undoes, does nothing
+   */
+  def redo(): Unit = {
+    def redoOp[A](move: PlayerMove): Unit =
+      makeMove(move)
+      undoHistory = undoHistory.tail
+
+    undoHistory match
+      case (clueCross: ClueCross, None) :: _ => redoOp(clueCross)
+      case (color: TileColor, _) :: _ => redoOp(color)
+      case (tileCross: TileCross, _) :: _ => redoOp(tileCross)
       case _ => ()
   }
 }

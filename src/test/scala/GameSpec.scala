@@ -249,6 +249,36 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
       }
     }
   }
+
+  property("Undoing and redoing a game's move history should result in the same game") {
+    forAll(validGameGen) { (game: Game) => {
+      val origHistory = game.history
+      val origBoard = game.playerMarkedBoard
+      val origRows = game.getRowCrosses
+      val origCols = game.getColCrosses
+      game.history.foreach(_ => game.undo())
+      origHistory.foreach(_ => game.redo())
+      assert(origBoard == game.playerMarkedBoard)
+      assert(origRows == game.getRowCrosses)
+      assert(origCols == game.getColCrosses)
+    }}
+  }
+
+  property("Undoing a game's move history, then making a move, should erase the board's undo history") {
+    forAll(validGameGen) { (game: Game) => {
+      val origGameHistorySize = game.history.size
+      game.history.foreach(_ => game.undo())
+
+      assert(game.makeMove(TileColor(Posn(0, 0))).isDefined)
+      assert(game.makeMove(TileColor(Posn(0, 0))).isDefined)
+      (0 until origGameHistorySize).foreach(_ => game.redo())
+
+      assert(game.history.size == 2)
+      assert(game.playerMarkedBoard.forall(_.forall(_ == Blank)))
+      assert(game.getRowCrosses.forall(_.forall(_ == false)))
+      assert(game.getColCrosses.forall(_.forall(_ == false)))
+    }}
+  }
 }
 
 object GameSpec {

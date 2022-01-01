@@ -279,6 +279,19 @@ class GameSpec extends AnyPropSpec with ScalaCheckPropertyChecks {
       assert(game.getColCrosses.forall(_.forall(_ == false)))
     }}
   }
+
+  property("Redoing when there are no redos left should result in no changes") {
+    forAll(validGameGen) { (game: Game) =>
+      val origHistory = game.history
+      val origBoard = game.playerMarkedBoard
+      val origRows = game.getRowCrosses
+      val origCols = game.getColCrosses
+      origHistory.foreach(_ => game.redo())
+      assert(origBoard == game.playerMarkedBoard)
+      assert(origRows == game.getRowCrosses)
+      assert(origCols == game.getColCrosses)
+    }
+  }
 }
 
 object GameSpec {

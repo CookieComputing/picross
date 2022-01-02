@@ -15,7 +15,7 @@ and verifying that my project conforms to the Picross game rules.
 
 This project will be developed *purely* in Scala, but libraries like
 ScalaFX and Scala.js will be used to render desktop and web UIs to play
-the game.
+the game. This project also uses a blend of property-based and table driven testing.
 
 ## Contributions
 

@@ -1,3 +1,4 @@
+enablePlugins(ScalaJSPlugin)
 name := "picross"
 
 version := "0.1"
